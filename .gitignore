@@ -60,5 +60,5 @@ htmlcov/
 # Render / deployment
 .render/
 
-
-.IMPLEMENTATION_REPORT.md
+# Internal reports — not needed in the repo
+IMPLEMENTATION_REPORT.md
