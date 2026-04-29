@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SONAR — AI Image Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <!-- ── Video background ── -->
+  <div class="video-bg-wrap" id="video-bg-wrap">
+    <video
+      id="bg-video"
+      class="bg-video"
+      autoplay
+      muted
+      loop
+      playsinline
+      preload="metadata"
+      aria-hidden="true"
+    >
+      <source src="/video/AI%20Powered%20Insight.mp4" type="video/mp4" />
+    </video>
+    <div class="video-overlay" id="video-overlay"></div>
+  </div>
+
+  <!-- ── Ambient background (fallback / layered on top of video) ── -->
+  <div class="bg-grid"></div>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <canvas id="noise-canvas"></canvas>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">◈</span>
+        <span class="logo-text">SONAR</span>
+        <span class="logo-tag">AI IMAGE GEN</span>
+      </div>
+      <nav class="header-nav">
+        <button class="nav-btn active" data-tab="generate">Generate</button>
+        <button class="nav-btn" data-tab="history">History</button>
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark theme">
+          <span class="icon-moon">🌙</span>
+          <span class="icon-sun">☀️</span>
+        </button>
+        <span class="status-dot" id="status-dot" title="API status"></span>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <section class="tab-panel active" id="tab-generate">
+      <div class="hero-text">
+        <h1>Turn words into<br /><em>visual worlds</em></h1>
+        <p class="hero-sub">Powered by FLUX.1-schnell </p>
+      </div>
+      <div class="prompt-card">
+        <div class="prompt-header">
+          <span class="prompt-label">PROMPT</span>
+          <span class="char-count" id="char-count">0 / 500</span>
+        </div>
+        <textarea id="prompt-input" class="prompt-textarea" placeholder="Describe your vision… e.g. A futuristic city at sunset, neon reflections on rain-slicked streets, cinematic 8k" rows="4" maxlength="500"></textarea>
+        <div class="prompt-footer">
+          <div class="model-select-wrap">
+            <span class="model-label">Model</span>
+            <div class="model-pills">
+              <label class="pill active"><input type="radio" name="model" value="flux" checked hidden />FLUX</label>
+              <label class="pill" title="SD 2.1 is no longer available on HF free tier — using FLUX instead"><input type="radio" name="model" value="sd21" hidden />SD 2.1 (→FLUX)</label>
+              <label class="pill" title="SDXL is no longer available on HF free tier — using FLUX instead"><input type="radio" name="model" value="sdxl" hidden />SDXL (→FLUX)</label>
+            </div>
+          </div>
+          <button class="generate-btn" id="generate-btn">
+            <span class="btn-icon">⚡</span>
+            <span class="btn-label">Generate</span>
+          </button>
+        </div>
+        <div class="suggestions">
+          <span class="sugg-label">Try:</span>
+          <button class="sugg-chip">Ethereal forest temple at dawn</button>
+          <button class="sugg-chip">Cyberpunk Tokyo alley, rain, neon</button>
+          <button class="sugg-chip">Deep sea creature, bioluminescent</button>
+          <button class="sugg-chip">Oil painting of a mountain sunset</button>
+        </div>
+      </div>
+      <div class="output-area" id="output-area">
+        <div class="output-idle" id="output-idle">
+          <div class="idle-icon">◈</div>
+          <p>Your generated image will appear here</p>
+        </div>
+        <div class="output-loading hidden" id="output-loading">
+          <div class="sonar-ring">
+            <div class="ring r1"></div>
+            <div class="ring r2"></div>
+            <div class="ring r3"></div>
+            <span class="ring-icon">◈</span>
+          </div>
+          <p class="loading-text" id="loading-text">Initialising model…</p>
+          <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        </div>
+        <div class="output-result hidden" id="output-result">
+          <div class="result-img-wrap">
+            <img id="result-img" src="" alt="Generated image" />
+            <div class="img-overlay">
+              <button class="img-action-btn" id="download-btn" title="Download">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download
+              </button>
+              <button class="img-action-btn" id="share-btn" title="Copy image">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                Share
+              </button>
+            </div>
+          </div>
+          <div class="result-meta">
+            <span class="meta-label">PROMPT</span>
+            <p class="meta-prompt" id="meta-prompt"></p>
+            <button class="regenerate-btn" id="regenerate-btn">↺ Regenerate</button>
+          </div>
+        </div>
+        <div class="output-error hidden" id="output-error">
+          <div class="error-icon">⚠</div>
+          <p class="error-msg" id="error-msg"></p>
+          <button class="retry-btn" id="retry-btn">Retry</button>
+        </div>
+      </div>
+    </section>
+    <section class="tab-panel" id="tab-history">
+      <div class="history-header">
+        <h2>Generation History</h2>
+        <p class="history-sub">Last 20 generations stored in MongoDB</p>
+      </div>
+      <div class="history-grid" id="history-grid">
+        <div class="history-loading">
+          <div class="mini-spinner"></div>
+          <span>Loading history…</span>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <span>◈ SONAR v1.0</span>
+    <span>Powered By Modern technology</span>
+    <span>Deployed on Render</span>
+  </footer>
+
+  <!-- Video background toggle (fixed bottom-right) -->
+  <button class="video-toggle-btn" id="video-toggle-btn" title="Toggle background video">
+    <span class="vbtn-icon">⏸</span>
+    <span class="vbtn-label">Pause BG</span>
+  </button>
+  <script src="/static/js/main.js"></script>
+</body>
+</html>
