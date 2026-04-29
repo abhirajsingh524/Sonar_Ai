@@ -59,3 +59,6 @@ htmlcov/
 
 # Render / deployment
 .render/
+
+
+.IMPLEMENTATION_REPORT.md
