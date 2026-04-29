@@ -451,7 +451,7 @@ cat pytest.ini
 
 ## 📄 License
 
-MIT License — feel free to use in your own projects.
+!!Permission to get the license first and then  use it in your project.
 
 ---
 
