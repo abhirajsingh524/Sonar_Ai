@@ -32,6 +32,16 @@ HF_MODEL_URLS: dict[str, str] = {
 HF_TIMEOUT: int   = int(os.getenv("HF_TIMEOUT", "90"))      # seconds per attempt
 HF_MAX_RETRIES: int = int(os.getenv("HF_MAX_RETRIES", "3")) # total attempts
 
+# ── Google Gemini (Tier-1.5 fallback) ────────────────────────────────────────
+# Optional — if GEMINI_API_KEY is not set, the Gemini tier is silently skipped.
+# Get a free key at https://aistudio.google.com/app/apikey
+# Required: "Generative Language API" enabled in Google Cloud Console.
+GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+GEMINI_MODEL:   str = os.getenv(
+    "GEMINI_MODEL",
+    "gemini-2.0-flash-exp-image-generation",  # free-tier default
+)
+
 # ── MongoDB ───────────────────────────────────────────────────────────────────
 MONGO_URI: str = os.getenv("MONGO_URI", "")
 MONGO_DB:  str = os.getenv("MONGO_DB",  "sonar")

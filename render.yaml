@@ -9,6 +9,8 @@ services:
         sync: false          # set manually in Render dashboard
       - key: MONGO_URI
         sync: false          # set manually in Render dashboard
+      - key: GEMINI_API_KEY
+        sync: false          # optional — set manually if you have a Gemini key
       - key: SECRET_KEY
         generateValue: true  # Render auto-generates a secure value
       - key: FLASK_DEBUG

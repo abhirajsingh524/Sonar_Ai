@@ -117,25 +117,43 @@ class TestImageService(unittest.TestCase):
         self.assertEqual(result.error, "")
 
     @patch("services.image_service._persist")
-    @patch("services.image_service.local_generate")
+    @patch("services.image_service._try_gemini")
     @patch("services.image_service.hf_generate")
-    def test_tier2_fallback(self, mock_hf, mock_local, mock_persist):
-        """HF fails → falls back to local; model_used == 'local'."""
+    def test_tier15_gemini_fallback(self, mock_hf, mock_gemini, mock_persist):
+        """HF fails → Gemini succeeds → model_used == 'gemini'."""
         from models.hf_model import HFModelError
-        mock_hf.side_effect = HFModelError("API down")
+        mock_hf.side_effect = HFModelError("HF down")
+        mock_gemini.return_value = (_minimal_png(), "gemini")
+        from services.image_service import generate
+        result = generate("ocean sunset", "flux")
+        self.assertEqual(result.model_used, "gemini")
+        self.assertIn("HF failed", result.error)
+
+    @patch("services.image_service._persist")
+    @patch("services.image_service.local_generate")
+    @patch("services.image_service._try_gemini")
+    @patch("services.image_service.hf_generate")
+    def test_tier2_fallback_when_gemini_also_fails(self, mock_hf, mock_gemini, mock_local, mock_persist):
+        """HF fails, Gemini fails → local placeholder; model_used == 'local'."""
+        from models.hf_model import HFModelError
+        mock_hf.side_effect = HFModelError("HF down")
+        mock_gemini.side_effect = Exception("Gemini down")
         mock_local.return_value = _minimal_png()
         from services.image_service import generate
         result = generate("ocean sunset", "flux")
         self.assertEqual(result.model_used, "local")
-        self.assertIn("API down", result.error)
+        self.assertIn("HF", result.error)
+        self.assertIn("Gemini", result.error)
 
     @patch("services.image_service._persist")
     @patch("services.image_service.local_generate")
+    @patch("services.image_service._try_gemini")
     @patch("services.image_service.hf_generate")
-    def test_both_tiers_fail_raises(self, mock_hf, mock_local, mock_persist):
-        """Both tiers fail → RuntimeError."""
+    def test_both_tiers_fail_raises(self, mock_hf, mock_gemini, mock_local, mock_persist):
+        """All three tiers fail → RuntimeError."""
         from models.hf_model import HFModelError
-        mock_hf.side_effect = HFModelError("API down")
+        mock_hf.side_effect = HFModelError("HF down")
+        mock_gemini.side_effect = Exception("Gemini down")
         mock_local.side_effect = Exception("Local broken")
         from services.image_service import generate
         with self.assertRaises(RuntimeError):
